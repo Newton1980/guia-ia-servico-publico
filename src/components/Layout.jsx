@@ -1,24 +1,26 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { BookOpen, LayoutDashboard, List, Shield, HelpCircle, Code, FileText, Target, Calendar, User, Database, Lock, Bot, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BookOpen, LayoutDashboard, List, Shield, HelpCircle, Code, FileText, Target, Calendar, User, Database, Lock, Bot, ChevronLeft, ChevronRight, LogOut, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const navItems = [
-    { path: '/', label: 'Capa', icon: BookOpen },
-    { path: '/sumario', label: 'Sumário Estratégico', icon: List },
-    { path: '/capitulo-0', label: '0. Mentalidade', icon: HelpCircle },
-    { path: '/capitulo-1', label: '1. O Que É IA', icon: Database },
-    { path: '/capitulo-2', label: '2. Ferramentas e PTCF', icon: Code },
-    { path: '/capitulo-3', label: '3. 6 Aplicações Práticas', icon: Bot },
-    { path: '/capitulo-4', label: '4. Ética e LGPD', icon: Lock },
-    { path: '/capitulo-5', label: '5. BI e Marco Legal', icon: Target },
-    { path: '/capitulo-6', label: '6. Plano de 30 Dias', icon: Calendar },
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/prompts', label: 'Biblioteca de Prompts', icon: FileText },
-    { path: '/checklist', label: 'Checklist ANPD', icon: Shield },
-    { path: '/autor', label: 'Sobre o Autor', icon: User },
+    { path: '/', label: 'Capa', icon: BookOpen, premium: false },
+    { path: '/sumario', label: 'Sumário Estratégico', icon: List, premium: false },
+    { path: '/capitulo-0', label: '0. Mentalidade', icon: HelpCircle, premium: false },
+    { path: '/capitulo-1', label: '1. O Que É IA', icon: Database, premium: false },
+    { path: '/capitulo-2', label: '2. Ferramentas e PTCF', icon: Code, premium: true },
+    { path: '/capitulo-3', label: '3. 6 Aplicações Práticas', icon: Bot, premium: true },
+    { path: '/capitulo-4', label: '4. Ética e LGPD', icon: Lock, premium: true },
+    { path: '/capitulo-5', label: '5. BI e Marco Legal', icon: Target, premium: true },
+    { path: '/capitulo-6', label: '6. Plano de 30 Dias', icon: Calendar, premium: true },
+    { path: '/prompts', label: 'Biblioteca de Prompts', icon: FileText, premium: true },
+    { path: '/checklist', label: 'Checklist ANPD', icon: Shield, premium: true },
+    { path: '/autor', label: 'Sobre o Autor', icon: User, premium: false },
   ];
 
   const currentIndex = navItems.findIndex(item => item.path === location.pathname);
@@ -34,10 +36,12 @@ const Layout = () => {
           <span className="label-caps text-secondary">IA NO SERVIÇO PÚBLICO</span>
         </div>
 
-        <div className="flex-col gap-2">
+        <div className="flex-col gap-2" style={{ flex: 1, overflowY: 'auto' }}>
           {navItems.map((item) => {
-            const Icon = item.icon;
+            const isLocked = item.premium && (!user || !user.hasPaid);
+            const Icon = isLocked ? Lock : item.icon;
             const isActive = location.pathname === item.path;
+            
             return (
               <Link
                 key={item.path}
@@ -47,7 +51,7 @@ const Layout = () => {
                   justifyContent: 'flex-start',
                   border: isActive ? '1px solid var(--color-primary-container)' : '1px solid transparent',
                   background: isActive ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
-                  color: isActive ? 'var(--color-primary-container)' : 'var(--color-on-surface)',
+                  color: isActive ? 'var(--color-primary-container)' : (isLocked ? 'var(--color-outline)' : 'var(--color-on-surface)'),
                   textDecoration: 'none'
                 }}
               >
@@ -56,6 +60,32 @@ const Layout = () => {
               </Link>
             );
           })}
+        </div>
+
+        {/* User Auth Widget */}
+        <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--color-glass-border)' }}>
+          {user ? (
+            <div className="flex items-center justify-between">
+              <div className="flex-col">
+                <span className="body-sm text-white font-bold">{user.name}</span>
+                <span className="label-caps" style={{ color: user.hasPaid ? 'var(--color-success)' : 'var(--color-warning)', fontSize: '10px' }}>
+                  {user.hasPaid ? 'MEMBRO PREMIUM' : 'CONTA GRATUITA'}
+                </span>
+              </div>
+              <button onClick={() => { logout(); navigate('/'); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-secondary)' }}>
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => navigate('/login')} 
+              className="action-badge flex items-center justify-center gap-2" 
+              style={{ width: '100%', padding: '8px' }}
+            >
+              <LogIn size={16} />
+              Login Premium
+            </button>
+          )}
         </div>
       </nav>
 
